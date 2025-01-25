@@ -2,12 +2,13 @@ defmodule PentoWeb.WrongLive do
   use PentoWeb, :live_view
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, score: 0, message: "Make a guess:", time: time())}
+    {:ok, assign(socket, score: 0, correctGuesses: 0, message: "Make a guess:", time: time(), winningNumber: :rand.uniform(10))}
   end
 
   def render(assigns) do
     ~H"""
     <h1 class="mb-4 text-4xl font-extrabold">Your score: <%= @score %></h1>
+    <h1 class="mb-4 text-3xl font-extrabold">Number of Correct Guesses: <%= @correctGuesses %></h1>
     <h2>
       <%= @message %>
       It's <%= @time %>
@@ -35,16 +36,37 @@ defmodule PentoWeb.WrongLive do
   # The second property is accessing the map with a key of "number" from "phx-value-number" and assigning it to the variable guess.
   # The socket is passed in so that we can update the live view which we do via socket.assigns. We assigned score to it on line 5 as well as message.
   def handle_event("guess", %{"number" => guess}, socket) do
-    message = " Your guess: #{guess}. Wrong. Guess again. "
-    score = socket.assigns.score - 1
-    {
-      :noreply,
-      assign(
-        socket,
-        message: message,
-        score: score,
-        time: time()
-      )
-    }
+
+    if socket.assigns.winningNumber == String.to_integer(guess) do
+      message = " Your guess: #{guess}. Was right! Guess again. "
+      score = socket.assigns.score + 1
+      correctGuesses = socket.assigns.correctGuesses + 1
+      winningNumber = :rand.uniform(10)
+
+      {
+        :noreply,
+        assign(
+          socket,
+          message: message,
+          score: score,
+          correctGuesses: correctGuesses,
+          time: time(),
+          winningNumber: winningNumber
+        )
+      }
+    else
+      message = " Your guess: #{guess}. Wrong. Guess again. "
+      score = socket.assigns.score - 1
+
+      {
+        :noreply,
+        assign(
+          socket,
+          message: message,
+          score: score,
+          time: time()
+        )
+      }
+    end
   end
 end
